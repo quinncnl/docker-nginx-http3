@@ -11,6 +11,7 @@ ENV NGINX_VERSION 1.19.5
 ENV NGX_BROTLI_COMMIT 9aec15e2aa6feea2113119ba06460af70ab3ea62
 ENV PCRE_VERSION 8.44
 ENV ZLIB_VERSION 1.2.11
+ENV BSSL_OCSP_PATCH_COMMIT 9f58c1e11a9d3989c2bec6b125399a7159d6dd01
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
@@ -68,13 +69,14 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
   --add-module=/usr/src/nginx_cookie_flag_module \
+  --add-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
   && apk update \
   && apk upgrade \
-  && apk add --no-cache ca-certificates \
+  && apk add --no-cache ca-certificates openssl \
   && update-ca-certificates \
   && apk add --no-cache --virtual .build-deps \
   gcc \
@@ -102,20 +104,40 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   rust \
   cargo \
   patch \
+  && apk add --no-cache --virtual .modsec-build-deps \
+  libxml2-dev \
+  curl-dev \
+  byacc \
+  flex \
+  yajl-dev \
+  libstdc++ \
+  libmaxminddb-dev \
+  lmdb-dev \
   && mkdir -p /usr/src \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && cd ngx_brotli \
   && git checkout -b $NGX_BROTLI_COMMIT \
-  && cd .. \
+  && cd /usr/src \
   && wget -qO- https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz | tar zxvf - \
   && wget -qO- http://zlib.net/zlib-${ZLIB_VERSION}.tar.gz | tar zxvf - \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
+  && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
+  && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
+  && curl -fSL https://raw.githubusercontent.com/kn007/patch/${BSSL_OCSP_PATCH_COMMIT}/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
-  && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
+  && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
+  && cd /usr/src/ModSecurity \
+  && ./build.sh \
+  && ./configure --with-lmdb \
+  && make \
+  && make install \
+  && cd /usr/src \
   && export GNUPGHOME="$(mktemp -d)" \
   && found=''; \
   for server in \
@@ -130,34 +152,23 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   test -z "$found" && echo >&2 "error: failed to fetch GPG key $GPG_KEYS" && exit 1; \
   gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
   && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-  && mkdir -p /usr/src \
   && tar -zxC /usr/src -f nginx.tar.gz \
   && rm nginx.tar.gz \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
-  && ./configure $CONFIG --with-debug --build="pcre-${PCRE_VERSION} zlib-${ZLIB_VERSION} quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
-  && make -j$(getconf _NPROCESSORS_ONLN) \
-  && mv objs/nginx objs/nginx-debug \
-  && mv objs/ngx_http_xslt_filter_module.so objs/ngx_http_xslt_filter_module-debug.so \
-  && mv objs/ngx_http_image_filter_module.so objs/ngx_http_image_filter_module-debug.so \
-  && mv objs/ngx_http_geoip_module.so objs/ngx_http_geoip_module-debug.so \
-  && mv objs/ngx_http_perl_module.so objs/ngx_http_perl_module-debug.so \
-  && mv objs/ngx_stream_geoip_module.so objs/ngx_stream_geoip_module-debug.so \
-  && ./configure $CONFIG --build="pcre-${PCRE_VERSION} zlib-${ZLIB_VERSION} quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
+  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
+  && ./configure $CONFIG --build="pcre-${PCRE_VERSION} zlib-${ZLIB_VERSION} quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && rm -rf /etc/nginx/html/ \
   && mkdir /etc/nginx/conf.d/ \
+  && mkdir /etc/nginx/modsec/ \
   && mkdir -p /usr/share/nginx/html/ \
   && install -m644 html/index.html /usr/share/nginx/html/ \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
-  && install -m755 objs/nginx-debug /usr/sbin/nginx-debug \
-  && install -m755 objs/ngx_http_xslt_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_xslt_filter_module-debug.so \
-  && install -m755 objs/ngx_http_image_filter_module-debug.so /usr/lib/nginx/modules/ngx_http_image_filter_module-debug.so \
-  && install -m755 objs/ngx_http_geoip_module-debug.so /usr/lib/nginx/modules/ngx_http_geoip_module-debug.so \
-  && install -m755 objs/ngx_http_perl_module-debug.so /usr/lib/nginx/modules/ngx_http_perl_module-debug.so \
-  && install -m755 objs/ngx_stream_geoip_module-debug.so /usr/lib/nginx/modules/ngx_stream_geoip_module-debug.so \
-  && ln -s ../../usr/lib/nginx/modules /etc/nginx/modules \
+  && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
+  && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/ \
+  && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
   && rm -rf /usr/src/nginx-$NGINX_VERSION \
@@ -166,6 +177,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && rm -rf /usr/src/njs \
   && rm -rf /usr/src/nginx_cookie_flag_module \
   && rm -rf /usr/src/quiche \
+  && rm -rf /usr/src/ModSecurity \
+  && rm -rf /usr/src/ModSecurity-nginx \
+  && rm -rf /usr/src/Enable_BoringSSL_OCSP.patch \
   \
   # Bring in gettext so we can get `envsubst`, then throw
   # the rest away. To do this, we need to install `gettext`
@@ -184,32 +198,41 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
   && apk del .build-deps \
   && apk del .brotli-build-deps \
+  && apk del .modsec-build-deps \
   && apk del .gettext \
-  && mv /tmp/envsubst /usr/local/bin/
-
-# Create self-signed certificate
-RUN apk add openssl \
+  && mv /tmp/envsubst /usr/local/bin/ \
+  # Create self-signed certificate
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
 
 FROM alpine:latest
 
-COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx-debug /usr/sbin/
+COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/lib/nginx /usr/lib/
 COPY --from=builder /usr/share/nginx/html/* /usr/share/nginx/html/
 COPY --from=builder /etc/nginx/* /etc/nginx/
 COPY --from=builder /usr/local/bin/envsubst /usr/local/bin/
 COPY --from=builder /etc/ssl/private/localhost.key /etc/ssl/private/
 COPY --from=builder /etc/ssl/localhost.pem /etc/ssl/
+COPY --from=builder /usr/local/share/coreruleset /usr/local/share/coreruleset/
+COPY --from=builder /usr/local/modsecurity /usr/local/modsecurity/
 
 RUN \
+  apk add --no-cache \
   # Bring in tzdata so users could set the timezones through the environment
   # variables
-  apk add --no-cache tzdata \
-  \
-  && apk add --no-cache \
+  tzdata \
+  # Dependencies
   pcre \
   libgcc \
   libintl \
+  # ModSecurity dependencies
+  libxml2-dev \
+  curl-dev \
+  yajl-dev \
+  geoip-dev \
+  libstdc++ \
+  libmaxminddb-dev \
+  lmdb-dev \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
   # forward request and error logs to docker log collector
@@ -218,6 +241,8 @@ RUN \
   && chown nginx: /var/log/nginx/access.log /var/log/nginx/error.log \
   && ln -sf /dev/stdout /var/log/nginx/access.log \
   && ln -sf /dev/stderr /var/log/nginx/error.log
+
+COPY modsec/* /etc/nginx/modsec/
 
 # Recommended nginx configuration. Please copy the config you wish to use.
 # COPY nginx.conf /etc/nginx/
