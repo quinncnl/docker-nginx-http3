@@ -2,10 +2,21 @@
 # Nginx with Quiche (HTTP/3), Brotli, Headers More
 # modules.
 ##################################################
+# This is a fork of:
+# ranadeeppolavarapu/docker-nginx-http3
+#
+# Differences in this fork:
+# - SpiderLabs ModSecurity with coreruleset
+# - BoringSSL OCSP enabled with kn007/patch
+# - Removed nginx debug build
+#
+# Thanks to ranadeeppolavarapu/docker-nginx-http3
+# for doing the ground work!
+##################################################
 
 FROM alpine:edge AS builder
 
-LABEL maintainer="Ranadeep Polavarapu <RanadeepPolavarapu@users.noreply.github.com>"
+LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.5
 ENV NGX_BROTLI_COMMIT 9aec15e2aa6feea2113119ba06460af70ab3ea62
@@ -257,4 +268,4 @@ ARG VCS_REF
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
   org.label-schema.vcs-ref=$VCS_REF \
-  org.label-schema.vcs-url="https://github.com/RanadeepPolavarapu/docker-nginx-http3.git"
+  org.label-schema.vcs-url="https://github.com/patrikjuvonen/docker-nginx-http3.git"

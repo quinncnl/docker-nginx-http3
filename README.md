@@ -1,19 +1,27 @@
 # docker-nginx-http3
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/ranadeeppolavarapu/nginx-http3?color=brightgreen)](https://hub.docker.com/r/ranadeeppolavarapu/nginx-http3)
-[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/ranadeeppolavarapu/nginx-http3)](https://hub.docker.com/r/ranadeeppolavarapu/nginx-http3)
-[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/ranadeeppolavarapu/nginx-http3?color=brightgreen)](https://hub.docker.com/r/ranadeeppolavarapu/nginx-http3)
-[![MicroBadger](https://images.microbadger.com/badges/image/ranadeeppolavarapu/nginx-http3.svg)](https://microbadger.com/images/ranadeeppolavarapu/nginx-http3)
-![GitHub](https://img.shields.io/github/license/RanadeepPolavarapu/docker-nginx-http3)
+[![Docker Pulls](https://img.shields.io/docker/pulls/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/patrikjuvonen/docker-nginx-http3)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
+[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
+[![MicroBadger](https://images.microbadger.com/badges/image/patrikjuvonen/docker-nginx-http3.svg)](https://microbadger.com/images/patrikjuvonen/docker-nginx-http3)
+![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
 Alpine Linux image with nginx `1.19.5` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag support. All built on the bleeding edge. Built on the edge, for the edge.
 
+This is a fork of [ranadeeppolavarapu/docker-nginx-http3](https://github.com/ranadeeppolavarapu/docker-nginx-http3). Thanks to him for doing the ground work.
+
+In this fork:
+
+- [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx) (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
+- BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
+- Removed nginx debug build
+
 HTTP/3 support provided from the smart people at [CloudFlare](https://cloudflare.com) with the [cloudflare/quiche](https://github.com/cloudflare/quiche) project.
 
-Images for this are available on [Docker Hub](https://hub.docker.com/r/ranadeeppolavarapu/nginx-http3).
+Images for this are available on [Docker Hub](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3).
 
-**Latest**: `docker pull ranadeeppolavarapu/nginx-http3`
+**Latest**: `docker pull patrikjuvonen/docker-nginx-http3`
 
 ## Usage
 
@@ -25,7 +33,7 @@ Example:
 
 ```Dockerfile
 # Base Nginx HTTP/3 Image
-FROM ranadeeppolavarapu/nginx-http3:latest
+FROM patrikjuvonen/docker-nginx-http3:latest
 
 # Copy your certs.
 COPY localhost.key /etc/ssl/private/
