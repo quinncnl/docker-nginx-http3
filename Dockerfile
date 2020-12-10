@@ -140,6 +140,8 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
+  && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
+  && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/${BSSL_OCSP_PATCH_COMMIT}/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
