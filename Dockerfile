@@ -143,12 +143,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/${BSSL_OCSP_PATCH_COMMIT}/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
-  && cd /usr/src/ModSecurity \
-  && ./build.sh \
-  && ./configure --with-lmdb \
-  && make \
-  && make install \
-  && cd /usr/src \
   && export GNUPGHOME="$(mktemp -d)" \
   && found=''; \
   for server in \
@@ -165,6 +159,11 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
   && tar -zxC /usr/src -f nginx.tar.gz \
   && rm nginx.tar.gz \
+  && cd /usr/src/ModSecurity \
+  && ./build.sh \
+  && ./configure --with-lmdb \
+  && make \
+  && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
