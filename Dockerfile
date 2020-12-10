@@ -186,6 +186,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && strip /usr/local/modsecurity/bin/* \
   && strip /usr/local/modsecurity/lib/*.so.* \
   && strip /usr/local/modsecurity/lib/*.a \
+  && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src/nginx-$NGINX_VERSION \
   && rm -rf /usr/src/ngx_brotli \
   && rm -rf /usr/src/headers-more-nginx-module \
