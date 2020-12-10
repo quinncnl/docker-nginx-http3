@@ -223,9 +223,9 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 FROM alpine:latest
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/
-COPY --from=builder /usr/lib/nginx /usr/lib/
+COPY --from=builder /usr/lib/nginx /usr/lib/nginx
 COPY --from=builder /usr/share/nginx/html/* /usr/share/nginx/html/
-COPY --from=builder /etc/nginx/* /etc/nginx/
+COPY --from=builder /etc/nginx/ /etc/nginx/
 COPY --from=builder /usr/local/bin/envsubst /usr/local/bin/
 COPY --from=builder /etc/ssl/private/localhost.key /etc/ssl/private/
 COPY --from=builder /etc/ssl/localhost.pem /etc/ssl/
