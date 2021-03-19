@@ -9,6 +9,8 @@
 
 Alpine Linux image with nginx `1.19.6` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag support. All built on the bleeding edge. Built on the edge, for the edge.
 
+1.19.7+ does not work yet (https://github.com/cloudflare/quiche/issues/859)
+
 This is a fork of [ranadeeppolavarapu/docker-nginx-http3](https://github.com/ranadeeppolavarapu/docker-nginx-http3). Thanks to him for doing the ground work.
 
 In this fork:

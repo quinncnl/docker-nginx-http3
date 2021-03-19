@@ -18,6 +18,7 @@ FROM alpine:latest AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
+# 1.19.7+ does not work yet (https://github.com/cloudflare/quiche/issues/859)
 ENV NGINX_VERSION 1.19.6
 ENV PCRE_VERSION 8.44
 ENV ZLIB_VERSION 1.2.11
@@ -25,7 +26,8 @@ ENV QUICHE_VERSION 0.7.0
 ENV MODSEC_VERSION v3/master
 ENV BSSL_OCSP_PATCH_COMMIT bf77a18bafe311abfd8536f4a4cce45ae017c401
 
-RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+RUN set -x \
+  && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
   --prefix=/etc/nginx \
   --sbin-path=/usr/sbin/nginx \
