@@ -14,15 +14,16 @@
 # for doing the ground work!
 ##################################################
 
-FROM alpine:edge AS builder
+FROM alpine:latest AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.6
-ENV NGX_BROTLI_COMMIT 9aec15e2aa6feea2113119ba06460af70ab3ea62
 ENV PCRE_VERSION 8.44
 ENV ZLIB_VERSION 1.2.11
-ENV BSSL_OCSP_PATCH_COMMIT 9f58c1e11a9d3989c2bec6b125399a7159d6dd01
+ENV QUICHE_VERSION 0.7.0
+ENV MODSEC_VERSION v3/master
+ENV BSSL_OCSP_PATCH_COMMIT bf77a18bafe311abfd8536f4a4cce45ae017c401
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
@@ -120,23 +121,20 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   curl-dev \
   byacc \
   flex \
-  yajl-dev \
   libstdc++ \
   libmaxminddb-dev \
   lmdb-dev \
+  file \
   && mkdir -p /usr/src \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
-  && cd ngx_brotli \
-  && git checkout -b $NGX_BROTLI_COMMIT \
-  && cd /usr/src \
-  && wget -qO- https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz | tar zxvf - \
-  && wget -qO- http://zlib.net/zlib-${ZLIB_VERSION}.tar.gz | tar zxvf - \
+  && wget -qO- https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz | tar zxf - \
+  && wget -qO- https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz | tar zxf - \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
-  && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive --branch ${QUICHE_VERSION} --single-branch https://github.com/cloudflare/quiche \
+  && git clone --recursive --branch ${MODSEC_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
@@ -163,7 +161,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && rm nginx.tar.gz \
   && cd /usr/src/ModSecurity \
   && ./build.sh \
-  && ./configure --with-lmdb \
+  && ./configure --with-lmdb --enable-examples=no \
   && make \
   && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
@@ -244,7 +242,6 @@ RUN \
   # ModSecurity dependencies
   libxml2-dev \
   curl-dev \
-  yajl-dev \
   geoip-dev \
   libstdc++ \
   libmaxminddb-dev \
