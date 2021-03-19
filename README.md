@@ -7,9 +7,7 @@
 ![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
-Alpine Linux image with nginx `1.19.6` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag support. All built on the bleeding edge. Built on the edge, for the edge.
-
-1.19.7+ does not work yet (https://github.com/cloudflare/quiche/issues/859)
+Alpine Linux image with nginx `1.19.8` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag, headers support. All built on the bleeding edge. Built on the edge, for the edge.
 
 This is a fork of [ranadeeppolavarapu/docker-nginx-http3](https://github.com/ranadeeppolavarapu/docker-nginx-http3). Thanks to him for doing the ground work.
 
