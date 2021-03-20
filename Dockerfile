@@ -6,7 +6,6 @@
 # ranadeeppolavarapu/docker-nginx-http3
 #
 # Differences in this fork:
-# - SpiderLabs ModSecurity with coreruleset
 # - BoringSSL OCSP enabled with kn007/patch
 # - Removed nginx debug build
 #
@@ -19,10 +18,6 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
-# v3.0.4
-ENV MODSEC_VERSION v3/master
-# v1.0.1
-ENV MODSEC_NGX_VERSION master
 
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
@@ -82,7 +77,6 @@ RUN set -x \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
   --add-module=/usr/src/nginx_cookie_flag_module \
-  --add-dynamic-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
@@ -115,15 +109,6 @@ RUN set -x \
   go \
   perl \
   patch \
-  && apk add --no-cache --virtual .modsec-build-deps \
-  libxml2-dev \
-  curl-dev \
-  byacc \
-  flex \
-  libstdc++ \
-  libmaxminddb-dev \
-  lmdb-dev \
-  file \
   # Install and use latest Rust 1.50+ for latest Brotli support
   && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
   && source ~/.cargo/env \
@@ -133,12 +118,6 @@ RUN set -x \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
-  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
-  && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
-  && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
-  && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
-  && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
@@ -158,33 +137,21 @@ RUN set -x \
   && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
   && tar -zxC /usr/src -f nginx.tar.gz \
   && rm nginx.tar.gz \
-  && cd /usr/src/ModSecurity \
-  && ./build.sh \
-  && ./configure --with-lmdb --enable-examples=no \
-  && make -j$(getconf _NPROCESSORS_ONLN) \
-  && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
   && patch -p01 < /usr/src/nginx-1.19.7.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
-  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
+  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && rm -rf /etc/nginx/html/ \
   && mkdir /etc/nginx/conf.d/ \
-  && mkdir /etc/nginx/modsec/ \
   && mkdir -p /usr/share/nginx/html/ \
   && install -m644 html/index.html /usr/share/nginx/html/ \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
-  && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
-  && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping \
-  && mv objs/ngx_http_modsecurity_module.so /usr/lib/nginx/modules/ \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
-  && strip /usr/local/modsecurity/bin/* \
-  && strip /usr/local/modsecurity/lib/*.so.* \
-  && strip /usr/local/modsecurity/lib/*.a \
   && cd ~ \
   && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src \
@@ -205,7 +172,6 @@ RUN set -x \
   )" \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
   && rustup self uninstall -y \
-  && apk del .modsec-build-deps \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
   && apk del .gettext \
@@ -222,8 +188,6 @@ COPY --from=builder /etc/nginx/ /etc/nginx/
 COPY --from=builder /usr/local/bin/envsubst /usr/local/bin/
 COPY --from=builder /etc/ssl/private/localhost.key /etc/ssl/private/
 COPY --from=builder /etc/ssl/localhost.pem /etc/ssl/
-COPY --from=builder /usr/local/share/coreruleset /usr/local/share/coreruleset/
-COPY --from=builder /usr/local/modsecurity /usr/local/modsecurity/
 
 RUN \
   apk add --no-cache \
@@ -234,13 +198,6 @@ RUN \
   pcre \
   libgcc \
   libintl \
-  # ModSecurity dependencies
-  libxml2-dev \
-  curl-dev \
-  geoip-dev \
-  libstdc++ \
-  libmaxminddb-dev \
-  lmdb-dev \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
   # forward request and error logs to docker log collector
@@ -249,8 +206,6 @@ RUN \
   && chown nginx: /var/log/nginx/access.log /var/log/nginx/error.log \
   && ln -sf /dev/stdout /var/log/nginx/access.log \
   && ln -sf /dev/stderr /var/log/nginx/error.log
-
-COPY modsec/* /etc/nginx/modsec/
 
 # Recommended nginx configuration. Please copy the config you wish to use.
 # COPY nginx.conf /etc/nginx/
