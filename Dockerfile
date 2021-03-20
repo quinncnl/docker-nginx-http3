@@ -76,6 +76,9 @@ RUN set -x \
   --with-openssl=/usr/src/quiche/deps/boringssl \
   --with-quiche=/usr/src/quiche \
   --add-module=/usr/src/ngx_brotli \
+  --add-module=/usr/src/headers-more-nginx-module \
+  --add-module=/usr/src/njs/nginx \
+  --add-module=/usr/src/nginx_cookie_flag_module \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
