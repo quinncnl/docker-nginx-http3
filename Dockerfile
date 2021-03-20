@@ -1,6 +1,5 @@
 ##################################################
-# Nginx with Quiche (HTTP/3), Brotli, Headers More
-# modules.
+# Nginx with Brotli, Headers More, ModSec modules.
 ##################################################
 # This is a fork of:
 # ranadeeppolavarapu/docker-nginx-http3
@@ -9,6 +8,7 @@
 # - SpiderLabs ModSecurity with coreruleset
 # - BoringSSL OCSP enabled with kn007/patch
 # - Removed nginx debug build
+# - No HTTP/3 (QUIC) support (for now!)
 #
 # Thanks to ranadeeppolavarapu/docker-nginx-http3
 # for doing the ground work!
@@ -23,9 +23,6 @@ ENV NGINX_VERSION 1.19.8
 ENV MODSEC_VERSION v3/master
 # v1.0.1
 ENV MODSEC_NGX_VERSION master
-
-# HACK: This patch is a temporary solution, might cause failures
-COPY nginx-1.19.7.patch /usr/src/
 
 RUN set -x \
   && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
@@ -75,14 +72,11 @@ RUN set -x \
   --with-compat \
   --with-file-aio \
   --with-http_v2_module \
-  --with-http_v3_module \
-  --with-openssl=/usr/src/quiche/deps/boringssl \
-  --with-quiche=/usr/src/quiche \
   --add-module=/usr/src/ngx_brotli \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
   --add-module=/usr/src/nginx_cookie_flag_module \
-  --add-dynamic-module=/usr/src/ModSecurity-nginx \
+  --add-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
@@ -127,19 +121,18 @@ RUN set -x \
   # Install and use latest Rust 1.50+ for latest Brotli support
   && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
   && source ~/.cargo/env \
+  && mkdir -p /usr/src \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
   && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
   && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
-  && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
   && export GNUPGHOME="$(mktemp -d)" \
@@ -161,13 +154,10 @@ RUN set -x \
   && cd /usr/src/ModSecurity \
   && ./build.sh \
   && ./configure --with-lmdb --enable-examples=no \
-  && make \
+  && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
-  && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
-  && patch -p01 < /usr/src/nginx-1.19.7.patch \
-  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
-  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
+  && ./configure $CONFIG --build="ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && rm -rf /etc/nginx/html/ \
@@ -178,7 +168,6 @@ RUN set -x \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
   && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
   && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping \
-  && mv objs/ngx_http_modsecurity_module.so /usr/lib/nginx/modules/ \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
