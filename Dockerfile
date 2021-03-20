@@ -183,6 +183,7 @@ RUN set -x \
   && strip /usr/local/modsecurity/bin/* \
   && strip /usr/local/modsecurity/lib/*.so.* \
   && strip /usr/local/modsecurity/lib/*.a \
+  && cd ~ \
   && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src \
   \
@@ -201,8 +202,8 @@ RUN set -x \
   | sort -u \
   )" \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
-  && apk del .modsec-build-deps \
   && rustup self uninstall -y \
+  && apk del .modsec-build-deps \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
   && apk del .gettext \
