@@ -19,12 +19,10 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
-ENV PCRE_VERSION 8.44
-ENV ZLIB_VERSION 1.2.11
 ENV MODSEC_VERSION v3/master
 
-# Temporary solution, might cause failures in nginx, I take no responsibility :P
-COPY nginx-1.19.8.patch /usr/src/
+# HACK: This patch is a temporary solution, might cause failures
+COPY nginx-1.19.7.patch /usr/src/
 
 RUN set -x \
   && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
@@ -44,9 +42,7 @@ RUN set -x \
   --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
   --user=nginx \
   --group=nginx \
-  --with-pcre=/usr/src/pcre-${PCRE_VERSION} \
   --with-pcre-jit \
-  --with-zlib=/usr/src/zlib-${ZLIB_VERSION} \
   --with-http_ssl_module \
   --with-http_realip_module \
   --with-http_addition_module \
@@ -126,13 +122,11 @@ RUN set -x \
   && source ~/.cargo/env \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
-  && wget -qO- https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz | tar zxf - \
-  && wget -qO- https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz | tar zxf - \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
-  && git clone --recursive --branch ${MODSEC_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
@@ -164,9 +158,9 @@ RUN set -x \
   && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
-  && patch -p01 < /usr/src/nginx-1.19.8.patch \
+  && patch -p01 < /usr/src/nginx-1.19.7.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
-  && ./configure $CONFIG --build="pcre-${PCRE_VERSION} zlib-${ZLIB_VERSION} quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD)" \
+  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && rm -rf /etc/nginx/html/ \

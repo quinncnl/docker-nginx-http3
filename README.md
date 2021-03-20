@@ -7,17 +7,17 @@
 ![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
-Alpine Linux image with nginx `1.19.8` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag, headers support. All built on the bleeding edge. Built on the edge, for the edge.
+Alpine Linux image with nginx `1.19.8` (mainline) with HTTP/3 (QUIC), TLSv1.3, 0-RTT, brotli, NJS, Cookie-Flag, headers, SpiderLabs ModSecurity with coreruleset and BoringSSL with OCSP support. All built on the bleeding edge. Built on the edge, for the edge.
 
 This is a fork of [ranadeeppolavarapu/docker-nginx-http3](https://github.com/ranadeeppolavarapu/docker-nginx-http3). Thanks to him for doing the ground work.
 
-In this fork:
+Special in this fork:
 
 - [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx) (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
 - BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
 - Removed nginx debug build
 
-HTTP/3 support provided from the smart people at [CloudFlare](https://cloudflare.com) with the [cloudflare/quiche](https://github.com/cloudflare/quiche) project.
+HTTP/3 support provided from the smart people at [Cloudflare](https://cloudflare.com) with the [cloudflare/quiche](https://github.com/cloudflare/quiche) project.
 
 Images for this are available on [Docker Hub](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3).
 
@@ -54,7 +54,7 @@ Contributions are welcome. Please feel free to contribute 😊.
 
 ## Features
 
-- HTTP/3 (QUIC) via CloudFlare's quiche
+- HTTP/3 (QUIC) via Cloudflare's quiche
 - HTTP/2 (with Server Push)
 - HTTP/2
 - BoringSSL (Google's flavor of OpenSSL)
@@ -63,8 +63,7 @@ Contributions are welcome. Please feel free to contribute 😊.
 - [headers-more-nginx-module](https://github.com/openresty/headers-more-nginx-module)
 - [NJS](https://www.nginx.com/blog/introduction-nginscript/)
 - [nginx_cookie_flag_module](https://www.nginx.com/products/nginx/modules/cookie-flag/)
-- PCRE latest with [JIT compilation](http://nginx.org/en/docs/ngx_core_module.html#pcre_jit) enabled
-- zlib latest
+- PCRE [JIT compilation](http://nginx.org/en/docs/ngx_core_module.html#pcre_jit) enabled
 - Alpine Linux (total size of **10 MB** compressed)
 
 ### In this fork
