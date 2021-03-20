@@ -19,7 +19,10 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
+# v3.0.4
 ENV MODSEC_VERSION v3/master
+# v1.0.1
+ENV MODSEC_NGX_VERSION master
 
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
@@ -79,6 +82,7 @@ RUN set -x \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
   --add-module=/usr/src/nginx_cookie_flag_module \
+  --add-dynamic-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
@@ -130,7 +134,7 @@ RUN set -x \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
   && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --depth=1 --recursive https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
@@ -174,6 +178,7 @@ RUN set -x \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
   && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
   && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping \
+  && mv objs/ngx_http_modsecurity_module.so /usr/lib/nginx/modules/ \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
