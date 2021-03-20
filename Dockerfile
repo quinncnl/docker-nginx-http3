@@ -161,7 +161,7 @@ RUN set -x \
   && cd /usr/src/ModSecurity \
   && ./build.sh \
   && ./configure --with-lmdb --enable-examples=no \
-  && make \
+  && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
