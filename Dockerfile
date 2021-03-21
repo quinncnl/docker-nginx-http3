@@ -1,5 +1,6 @@
 ##################################################
-# Nginx with Brotli, Headers More, ModSec modules.
+# Nginx with Quiche (HTTP/3), Brotli, Headers More
+# and ModSec modules.
 ##################################################
 # This is a fork of:
 # ranadeeppolavarapu/docker-nginx-http3
@@ -8,7 +9,6 @@
 # - SpiderLabs ModSecurity with coreruleset
 # - BoringSSL OCSP enabled with kn007/patch
 # - Removed nginx debug build
-# - No HTTP/3 (QUIC) support (for now!)
 #
 # Thanks to ranadeeppolavarapu/docker-nginx-http3
 # for doing the ground work!
@@ -19,10 +19,12 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
-# v3.0.4
-ENV MODSEC_VERSION v3/master
-# v1.0.1
-ENV MODSEC_NGX_VERSION master
+ENV QUICHE_VERSION 0.5.1
+ENV MODSEC_VERSION v3.0.4
+ENV MODSEC_NGX_VERSION v1.0.1
+
+# HACK: This patch is a temporary solution, might cause failures
+COPY nginx-1.19.7.patch /usr/src/
 
 RUN set -x \
   && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
@@ -72,6 +74,9 @@ RUN set -x \
   --with-compat \
   --with-file-aio \
   --with-http_v2_module \
+  --with-http_v3_module \
+  --with-openssl=/usr/src/quiche/deps/boringssl \
+  --with-quiche=/usr/src/quiche \
   --add-module=/usr/src/ngx_brotli \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
@@ -109,6 +114,8 @@ RUN set -x \
   go \
   perl \
   patch \
+  rust \
+  cargo \
   && apk add --no-cache --virtual .modsec-build-deps \
   libxml2-dev \
   curl-dev \
@@ -118,17 +125,17 @@ RUN set -x \
   libmaxminddb-dev \
   lmdb-dev \
   file \
-  # Install and use latest Rust 1.50+ for latest Brotli support
-  && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-  && source ~/.cargo/env \
-  && mkdir -p /usr/src \
+  # && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+  # && source ~/.cargo/env \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive https://github.com/nginx/njs \
   && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --depth=1 --recursive --branch $QUICHE_VERSION --single-branch https://github.com/cloudflare/quiche \
+  && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
+  && git clone --depth=1 --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
@@ -157,7 +164,10 @@ RUN set -x \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
-  && ./configure $CONFIG --build="ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
+  && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
+  && patch -p01 < /usr/src/nginx-1.19.7.patch \
+  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
+  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make install \
   && rm -rf /etc/nginx/html/ \
@@ -193,7 +203,7 @@ RUN set -x \
   | sort -u \
   )" \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
-  && rustup self uninstall -y \
+  # && rustup self uninstall -y \
   && apk del .modsec-build-deps \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
