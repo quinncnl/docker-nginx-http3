@@ -20,8 +20,8 @@ LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.co
 
 ENV NGINX_VERSION 1.19.8
 ENV QUICHE_VERSION 0.5.1
-ENV MODSEC_VERSION v3.0.4
-ENV MODSEC_NGX_VERSION v1.0.1
+ENV MODSEC_VERSION v3/master
+ENV MODSEC_NGX_VERSION master
 
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
