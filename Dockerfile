@@ -1,6 +1,6 @@
 ##################################################
 # Nginx with Quiche (HTTP/3), Brotli, Headers More
-# modules.
+# and ModSec modules.
 ##################################################
 # This is a fork of:
 # ranadeeppolavarapu/docker-nginx-http3
@@ -18,6 +18,9 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
+ENV QUICHE_VERSION 0.7.0
+ENV MODSEC_VERSION v3/master
+ENV MODSEC_NGX_VERSION master
 
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
@@ -77,6 +80,7 @@ RUN set -x \
   --add-module=/usr/src/headers-more-nginx-module \
   --add-module=/usr/src/njs/nginx \
   --add-module=/usr/src/nginx_cookie_flag_module \
+  --add-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
   " \
   && addgroup -S nginx \
@@ -109,16 +113,30 @@ RUN set -x \
   go \
   perl \
   patch \
-  # Install and use latest Rust 1.50+ for latest Brotli support
-  && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-  && source ~/.cargo/env \
+  rust \
+  cargo \
+  && apk add --no-cache --virtual .modsec-build-deps \
+  libxml2-dev \
+  curl-dev \
+  byacc \
+  flex \
+  libstdc++ \
+  libmaxminddb-dev \
+  lmdb-dev \
+  file \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
-  && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
-  && git clone --depth=1 --recursive https://github.com/nginx/njs \
-  && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --depth=1 --recursive https://github.com/cloudflare/quiche \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
+  && git clone --depth=1 --recursive --shallow-submodules --branch $QUICHE_VERSION --single-branch https://github.com/cloudflare/quiche \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
+  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
+  && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
+  && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
+  && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc -o nginx.tar.gz.asc \
   && export GNUPGHOME="$(mktemp -d)" \
@@ -137,6 +155,11 @@ RUN set -x \
   && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
   && tar -zxC /usr/src -f nginx.tar.gz \
   && rm nginx.tar.gz \
+  && cd /usr/src/ModSecurity \
+  && ./build.sh \
+  && ./configure --with-lmdb --enable-examples=no \
+  && make -j$(getconf _NPROCESSORS_ONLN) \
+  && make install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
   && patch -p01 < /usr/src/nginx-1.19.7.patch \
@@ -149,6 +172,8 @@ RUN set -x \
   && mkdir -p /usr/share/nginx/html/ \
   && install -m644 html/index.html /usr/share/nginx/html/ \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
+  && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
+  && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
@@ -171,7 +196,7 @@ RUN set -x \
   | sort -u \
   )" \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
-  && rustup self uninstall -y \
+  && apk del .modsec-build-deps \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
   && apk del .gettext \
