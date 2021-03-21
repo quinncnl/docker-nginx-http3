@@ -14,8 +14,7 @@
 # for doing the ground work!
 ##################################################
 
-# Should always be latest, but needs testing every time
-FROM alpine:3.13.2 AS builder
+FROM alpine:latest AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
@@ -128,14 +127,14 @@ RUN set -x \
   file \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
-  && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
-  && git clone --depth=1 --recursive https://github.com/nginx/njs \
-  && git clone --depth=1 --recursive https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --depth=1 --recursive --branch $QUICHE_VERSION --single-branch https://github.com/cloudflare/quiche \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
+  && git clone --depth=1 --recursive --shallow-submodules --branch $QUICHE_VERSION --single-branch https://github.com/cloudflare/quiche \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
-  && git clone --depth=1 --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --depth=1 --recursive --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
-  && git clone --depth=1 --recursive https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
+  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --depth=1 --recursive --shallow-submodules https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
   && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
@@ -210,8 +209,7 @@ RUN set -x \
   # Create self-signed certificate
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
 
-# Should always be latest, but needs testing every time
-FROM alpine:3.13.2
+FROM alpine:latest
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/lib/nginx /usr/lib/nginx
