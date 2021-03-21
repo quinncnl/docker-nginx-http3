@@ -34,7 +34,7 @@ Best practice example Nginx configs are available in this repo. See [_nginx.conf
 Example:
 
 ```Dockerfile
-# Base image
+# Nginx HTTP/3 Image
 FROM patrikjuvonen/docker-nginx-http3:latest
 
 # Copy your certs.

@@ -25,8 +25,7 @@ ENV MODSEC_NGX_VERSION master
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
 
-RUN set -x \
-  && GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
   --prefix=/etc/nginx \
   --sbin-path=/usr/sbin/nginx \
@@ -112,9 +111,9 @@ RUN set -x \
   cmake \
   go \
   perl \
-  patch \
   rust \
   cargo \
+  patch \
   && apk add --no-cache --virtual .modsec-build-deps \
   libxml2-dev \
   curl-dev \
@@ -177,7 +176,6 @@ RUN set -x \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
-  && cd ~ \
   && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src \
   \
