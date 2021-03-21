@@ -14,12 +14,13 @@
 # for doing the ground work!
 ##################################################
 
-FROM alpine:latest AS builder
+# Should always be latest, but needs testing every time
+FROM alpine:3.13.2 AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
-ENV QUICHE_VERSION 0.5.1
+ENV QUICHE_VERSION 0.7.0
 ENV MODSEC_VERSION v3/master
 ENV MODSEC_NGX_VERSION master
 
@@ -125,8 +126,6 @@ RUN set -x \
   libmaxminddb-dev \
   lmdb-dev \
   file \
-  # && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-  # && source ~/.cargo/env \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive https://github.com/openresty/headers-more-nginx-module \
@@ -203,7 +202,6 @@ RUN set -x \
   | sort -u \
   )" \
   && apk add --no-cache --virtual .nginx-rundeps $runDeps \
-  # && rustup self uninstall -y \
   && apk del .modsec-build-deps \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
@@ -212,7 +210,8 @@ RUN set -x \
   # Create self-signed certificate
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
 
-FROM alpine:latest
+# Should always be latest, but needs testing every time
+FROM alpine:3.13.2
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/lib/nginx /usr/lib/nginx
