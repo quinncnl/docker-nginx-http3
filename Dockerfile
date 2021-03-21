@@ -18,9 +18,9 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.19.8
-ENV QUICHE_VERSION 0.7.0
-ENV MODSEC_VERSION v3/master
-ENV MODSEC_NGX_VERSION master
+ENV QUICHE_CHECKOUT 0aacb1f488ed2cfe216a9e295ad609a7856ecc93
+ENV MODSEC_TAG v3/master
+ENV MODSEC_NGX_TAG master
 
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
@@ -128,10 +128,13 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --depth=1 --recursive --shallow-submodules --branch $QUICHE_VERSION --single-branch https://github.com/cloudflare/quiche \
+  && git clone --recursive https://github.com/cloudflare/quiche \
+  && cd quiche \
+  && git checkout --recurse-submodules $QUICHE_CHECKOUT \
+  && cd .. \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
-  && git clone --recursive --branch $MODSEC_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_VERSION --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
+  && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
@@ -168,6 +171,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && make install \
   && rm -rf /etc/nginx/html/ \
   && mkdir /etc/nginx/conf.d/ \
+  && mkdir /etc/nginx/modsec/ \
   && mkdir -p /usr/share/nginx/html/ \
   && install -m644 html/index.html /usr/share/nginx/html/ \
   && install -m644 html/50x.html /usr/share/nginx/html/ \
@@ -176,6 +180,9 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
+  && strip /usr/local/modsecurity/bin/* \
+  && strip /usr/local/modsecurity/lib/*.so.* \
+  && strip /usr/local/modsecurity/lib/*.a \
   && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src \
   \
@@ -211,6 +218,8 @@ COPY --from=builder /etc/nginx/ /etc/nginx/
 COPY --from=builder /usr/local/bin/envsubst /usr/local/bin/
 COPY --from=builder /etc/ssl/private/localhost.key /etc/ssl/private/
 COPY --from=builder /etc/ssl/localhost.pem /etc/ssl/
+COPY --from=builder /usr/local/share/coreruleset /usr/local/share/coreruleset/
+COPY --from=builder /usr/local/modsecurity /usr/local/modsecurity/
 
 RUN \
   apk add --no-cache \
@@ -221,6 +230,14 @@ RUN \
   pcre \
   libgcc \
   libintl \
+  # ModSecurity dependencies
+  libxml2-dev \
+  curl-dev \
+  yajl-dev \
+  geoip-dev \
+  libstdc++ \
+  libmaxminddb-dev \
+  lmdb-dev \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
   # forward request and error logs to docker log collector
@@ -229,6 +246,8 @@ RUN \
   && chown nginx: /var/log/nginx/access.log /var/log/nginx/error.log \
   && ln -sf /dev/stdout /var/log/nginx/access.log \
   && ln -sf /dev/stderr /var/log/nginx/error.log
+
+COPY modsec/* /etc/nginx/modsec/
 
 # Recommended nginx configuration. Please copy the config you wish to use.
 # COPY nginx.conf /etc/nginx/
