@@ -81,6 +81,8 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   --add-module=/usr/src/nginx_cookie_flag_module \
   --add-module=/usr/src/ModSecurity-nginx \
   --with-cc-opt=-Wno-error \
+  --with-select_module \
+  --with-poll_module \
   " \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
