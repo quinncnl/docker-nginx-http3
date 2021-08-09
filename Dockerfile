@@ -25,6 +25,10 @@ ENV MODSEC_NGX_TAG master
 # HACK: This patch is a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
 
+# Build-time metadata as defined at https://label-schema.org
+ARG BUILD_DATE
+ARG VCS_REF
+
 RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
   --prefix=/etc/nginx \
@@ -131,13 +135,14 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --recursive https://github.com/cloudflare/quiche \
-  && cd quiche \
+  && cd /usr/src/quiche \
   && git checkout --recurse-submodules $QUICHE_CHECKOUT \
-  && cd .. \
+  && cd /usr/src \
   && curl -fSL https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch -o Enable_BoringSSL_OCSP.patch \
   && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
+  && CRS_COMMIT=$(git --git-dir=/usr/local/share/coreruleset/.git rev-parse --short HEAD) \
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
   && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
   && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
@@ -168,7 +173,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
   && patch -p01 < /usr/src/nginx-1.19.7.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
-  && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
+  && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$CRS_COMMIT quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make -j$(getconf _NPROCESSORS_ONLN) install \
   && rm -rf /etc/nginx/html/ \
@@ -258,10 +263,6 @@ COPY modsec/* /etc/nginx/modsec/
 STOPSIGNAL SIGTERM
 
 CMD ["nginx", "-g", "daemon off;"]
-
-# Build-time metadata as defined at http://label-schema.org
-ARG BUILD_DATE
-ARG VCS_REF
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
   org.label-schema.vcs-ref=$VCS_REF \
