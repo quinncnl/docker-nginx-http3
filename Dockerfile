@@ -163,14 +163,14 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && ./build.sh \
   && ./configure --with-lmdb --enable-examples=no \
   && make -j$(getconf _NPROCESSORS_ONLN) \
-  && make install \
+  && make -j$(getconf _NPROCESSORS_ONLN) install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch \
   && patch -p01 < /usr/src/nginx-1.19.7.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
   && ./configure $CONFIG --build="quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
-  && make install \
+  && make -j$(getconf _NPROCESSORS_ONLN) install \
   && rm -rf /etc/nginx/html/ \
   && mkdir /etc/nginx/conf.d/ \
   && mkdir /etc/nginx/modsec/ \
