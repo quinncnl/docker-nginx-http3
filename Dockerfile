@@ -17,7 +17,7 @@ FROM alpine:latest AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
-ENV NGINX_VERSION 1.21.1
+ENV NGINX_VERSION 1.21.3
 ENV QUICHE_CHECKOUT fb4afce29d0a02620e0a5957f1892d83c665b5f8
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
