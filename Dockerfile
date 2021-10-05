@@ -18,7 +18,7 @@ FROM alpine:latest AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.21.3
-ENV QUICHE_CHECKOUT fb4afce29d0a02620e0a5957f1892d83c665b5f8
+ENV QUICHE_CHECKOUT c885a71fd58c0c610e9e209f210b1951db81d6c5
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 
@@ -116,8 +116,6 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   cmake \
   go \
   perl \
-  rust \
-  cargo \
   patch \
   && apk add --no-cache --virtual .modsec-build-deps \
   libxml2-dev \
@@ -128,6 +126,8 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   libmaxminddb-dev \
   lmdb-dev \
   file \
+  && wget -qO - -o /dev/null https://sh.rustup.rs | sh -s -- --profile minimal -y \
+  && source /root/.cargo/env \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
@@ -211,7 +211,8 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
   && apk del .gettext \
-  && rm /var/cache/apk/* \
+  && rm -rf /root/.cargo \
+  && rm -rf /var/cache/apk/* \
   && mv /tmp/envsubst /usr/local/bin/ \
   # Create self-signed certificate
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
