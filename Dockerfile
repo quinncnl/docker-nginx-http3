@@ -211,6 +211,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && apk del .brotli-build-deps \
   && apk del .build-deps \
   && apk del .gettext \
+  && rm /var/cache/apk/* \
   && mv /tmp/envsubst /usr/local/bin/ \
   # Create self-signed certificate
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
