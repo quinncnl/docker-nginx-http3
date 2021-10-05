@@ -1,10 +1,9 @@
 # docker-nginx-http3
 
+![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Docker Pulls](https://img.shields.io/docker/pulls/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/patrikjuvonen/docker-nginx-http3)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
-[![MicroBadger](https://images.microbadger.com/badges/image/patrikjuvonen/docker-nginx-http3.svg)](https://microbadger.com/images/patrikjuvonen/docker-nginx-http3)
-![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
 Alpine Linux image with nginx `1.21.3` (mainline) with HTTP/3 (QUIC), TLSv1.3,
