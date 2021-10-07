@@ -19,7 +19,8 @@ Thanks to him for doing the ground work.
 
 Special in this fork:
 
-- [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx) (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
+- [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx)
+  (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
 - BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
 - Removed nginx debug build
 
@@ -89,7 +90,8 @@ Contributions are welcome. Please feel free to contribute 😊.
 
 ### In this fork
 
-- [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx) (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
+- [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx)
+  (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
 - BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
 - Removed nginx debug build
 
