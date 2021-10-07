@@ -13,7 +13,7 @@
 # for doing the ground work!
 ##################################################
 
-FROM alpine:latest AS builder
+FROM alpine:edge AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
@@ -98,7 +98,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   gcc \
   libc-dev \
   make \
-  openssl-dev \
+  openssl1.1-compat-dev \
   pcre-dev \
   zlib-dev \
   linux-headers \
@@ -116,6 +116,8 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   cmake \
   go \
   perl \
+  rust \
+  cargo \
   patch \
   && apk add --no-cache --virtual .modsec-build-deps \
   libxml2-dev \
@@ -126,8 +128,6 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   libmaxminddb-dev \
   lmdb-dev \
   file \
-  && wget -qO - -o /dev/null https://sh.rustup.rs | sh -s -- --profile minimal -y \
-  && source /root/.cargo/env \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
