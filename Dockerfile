@@ -21,6 +21,7 @@ ENV NGINX_VERSION 1.21.4
 ENV QUICHE_CHECKOUT fe56de9c7a1117621ea01edc165bc5635f37fe27
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
+ENV NJS_TAG 0.6.2
 
 # HACK: These patches are a temporary solution, might cause failures
 COPY nginx-1.19.7.patch /usr/src/
@@ -99,7 +100,6 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   gcc \
   libc-dev \
   make \
-  openssl1.1-compat-dev \
   pcre-dev \
   zlib-dev \
   linux-headers \
@@ -122,7 +122,6 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   patch \
   && apk add --no-cache --virtual .modsec-build-deps \
   libxml2-dev \
-  curl-dev \
   byacc \
   flex \
   libstdc++ \
@@ -132,7 +131,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
-  && git clone --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
+  && git clone --branch $NJS_TAG --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
   && git clone --recursive https://github.com/cloudflare/quiche \
   && cd /usr/src/quiche \
@@ -242,7 +241,6 @@ RUN \
   libintl \
   # ModSecurity dependencies
   libxml2-dev \
-  curl-dev \
   yajl-dev \
   geoip-dev \
   libstdc++ \
