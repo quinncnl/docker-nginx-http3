@@ -6,7 +6,7 @@
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
-Alpine Linux image with nginx `1.21.3` (mainline) with HTTP/3 (QUIC), TLSv1.3,
+Alpine Linux image with nginx `1.21.4` (mainline) with HTTP/3 (QUIC), TLSv1.3,
 0-RTT, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset and
 BoringSSL with OCSP support. All built on the bleeding edge. Built on the edge,
 for the edge.
