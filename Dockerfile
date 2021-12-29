@@ -18,7 +18,7 @@ FROM alpine:edge AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.21.5
-ENV QUICHE_CHECKOUT fe56de9c7a1117621ea01edc165bc5635f37fe27
+ENV QUICHE_CHECKOUT af678919d35d7ea4068b4af5156128d6c88fed68
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 ENV NJS_TAG 0.6.2
@@ -79,7 +79,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   --with-file-aio \
   --with-http_v2_module \
   --with-http_v3_module \
-  --with-openssl=/usr/src/quiche/deps/boringssl \
+  --with-openssl=/usr/src/quiche/quiche/deps/boringssl \
   --with-quiche=/usr/src/quiche \
   --add-module=/usr/src/ngx_brotli \
   --add-module=/usr/src/headers-more-nginx-module \
@@ -169,7 +169,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make -j$(getconf _NPROCESSORS_ONLN) install \
   && cd /usr/src/nginx-$NGINX_VERSION \
-  && patch -p01 < /usr/src/quiche/extras/nginx/nginx-1.16.patch || true \
+  && patch -p01 < /usr/src/quiche/nginx/nginx-1.16.patch || true \
   && patch -p01 < /usr/src/quiche-nginx-1.21.4.patch \
   && patch -p01 < /usr/src/nginx-1.19.7.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
