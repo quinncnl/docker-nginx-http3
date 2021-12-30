@@ -219,7 +219,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && mkdir -p /etc/ssl/private \
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
 
-FROM alpine:latest
+FROM alpine:edge
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/
 COPY --from=builder /usr/lib/nginx /usr/lib/nginx
