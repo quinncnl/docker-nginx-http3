@@ -137,7 +137,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && cd /usr/src/quiche \
   && git checkout --recurse-submodules $QUICHE_CHECKOUT \
   && cd /usr/src \
-  && wget -q https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch \
+  && wget -q https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
   && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
   && git clone --depth=1 https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
