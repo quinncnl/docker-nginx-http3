@@ -74,6 +74,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   --with-compat \
   --with-file-aio \
   --with-http_v2_module \
+  --with-http_v2_hpack_enc \
   --with-http_v3_module \
   --with-openssl=/usr/src/quiche/quiche/deps/boringssl \
   --with-quiche=/usr/src/quiche \
