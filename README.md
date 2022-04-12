@@ -7,11 +7,11 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
 
 Alpine Linux image with nginx `1.21.6` (mainline) with HTTP/3 (QUIC), TLSv1.3,
-0-RTT, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset and
-BoringSSL with OCSP support. All built on the bleeding edge. Built on the edge,
-for the edge.
+0-RTT, HPACK, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset
+and BoringSSL with OCSP support. All built on the bleeding edge. Built on the
+edge, for the edge.
 
-Total size is only about ~38 MB uncompressed and ~14 MB compressed.
+Total size is only about ~36 MB uncompressed and ~14 MB compressed.
 
 This is a fork of
 [ranadeeppolavarapu/docker-nginx-http3](https://github.com/ranadeeppolavarapu/docker-nginx-http3).
@@ -21,6 +21,7 @@ Special in this fork:
 
 - [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx)
   (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
+- HPACK enabled and nginx quiche patch by [kn007/patch](https://github.com/kn007/patch/)
 - BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
 - Removed nginx debug build
 
@@ -79,6 +80,7 @@ Contributions are welcome. Please feel free to contribute 😊.
 - HTTP/2
 - BoringSSL (Google's flavor of OpenSSL)
 - TLS 1.3 **with 0-RTT support**
+- [HPACK](https://blog.cloudflare.com/hpack-the-silent-killer-feature-of-http-2/)
 - Brotli compression
 - [headers-more-nginx-module](https://github.com/openresty/headers-more-nginx-module)
 - [NJS](https://www.nginx.com/blog/introduction-nginscript/)
@@ -92,6 +94,7 @@ Contributions are welcome. Please feel free to contribute 😊.
 
 - [ModSecurity for nginx](https://github.com/SpiderLabs/ModSecurity-nginx)
   (SpiderLabs) with [coreruleset](https://github.com/coreruleset/coreruleset/)
+- HPACK enabled and nginx quiche patch by [kn007/patch](https://github.com/kn007/patch/)
 - BoringSSL OCSP enabled with [kn007/patch](https://github.com/kn007/patch/)
 - Removed nginx debug build
 
