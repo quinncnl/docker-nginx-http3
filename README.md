@@ -1,6 +1,7 @@
 # docker-nginx-http3
 
-![GitHub](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
+[![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/workflows/Build/badge.svg?event=push&branch=master)](https://github.com/patrikjuvonen/docker-nginx-http3/actions?query=branch%3Amaster+event%3Apush)
+![MIT License](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Docker Pulls](https://img.shields.io/docker/pulls/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/patrikjuvonen/docker-nginx-http3)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
