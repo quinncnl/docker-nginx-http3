@@ -23,10 +23,6 @@ ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 ENV NJS_TAG 0.6.2
 
-# HACK: These patches are a temporary solution, might cause failures
-COPY nginx-1.19.7.patch /usr/src/
-COPY quiche-nginx-1.21.4.patch /usr/src/
-
 # Build-time metadata as defined at https://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
@@ -128,6 +124,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   libmaxminddb-dev \
   lmdb-dev \
   file \
+  && mkdir /usr/src \
   && cd /usr/src \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
   && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
@@ -137,6 +134,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && cd /usr/src/quiche \
   && git checkout --recurse-submodules $QUICHE_CHECKOUT \
   && cd /usr/src \
+  && wget -q https://raw.githubusercontent.com/kn007/patch/a3b20fc0df25aa6875f04f414e22bb1d2cd3ecb2/nginx_with_quic.patch \
   && wget -q https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
   && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
@@ -169,9 +167,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make -j$(getconf _NPROCESSORS_ONLN) install \
   && cd /usr/src/nginx-$NGINX_VERSION \
-  && patch -p01 < /usr/src/quiche/nginx/nginx-1.16.patch || true \
-  && patch -p01 < /usr/src/quiche-nginx-1.21.4.patch \
-  && patch -p01 < /usr/src/nginx-1.19.7.patch \
+  && patch -p01 < /usr/src/nginx_with_quic.patch \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
   && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$CRS_COMMIT quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
