@@ -18,7 +18,7 @@ FROM alpine:edge AS builder
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
 ENV NGINX_VERSION 1.21.6
-ENV QUICHE_CHECKOUT d97ab1974e1210f192838223f5ec533ffb4de3d0
+ENV QUICHE_CHECKOUT 3cedd5995347c8d8293b4557d0c0055a2c913453
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 ENV NJS_TAG 0.6.2
