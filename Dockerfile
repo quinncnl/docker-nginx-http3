@@ -194,7 +194,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   # the rest away. To do this, we need to install `gettext`
   # then move `envsubst` out of the way so `gettext` can
   # be deleted completely, then move `envsubst` back.
-  && apk add --no-cache --virtual .gettext gettext \
+  && apk add --no-cache --virtual .gettext "gettext>=0.21-r2" \
   && mv /usr/bin/envsubst /tmp/ \
   \
   && runDeps="$( \
