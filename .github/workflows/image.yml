@@ -1,4 +1,4 @@
-name: Build image
+name: build our image
 
 on:
   push:
@@ -10,11 +10,13 @@ jobs:
     steps:
       - name: checkout code
         uses: actions/checkout@v3
+      # https://github.com/docker/setup-qemu-action
       - name: Set Environment Variables
         env:
-          REPO_OWNER: "${{ github.repository_owner }}"
+          REPO_OWNER: '${{ github.repository_owner }}'
         run: |
           IMG=docker-nginx-http3
+
           echo "BUILD_VER=1.0.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
           echo "IMG=${IMG}" >> $GITHUB_ENV
           echo "DOCKER_IMG=${REPO_OWNER}/${IMG}" >> $GITHUB_ENV
@@ -25,6 +27,7 @@ jobs:
           echo "VCS_REF=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
+      # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Available platforms

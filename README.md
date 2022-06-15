@@ -1,11 +1,11 @@
 # docker-nginx-http3
 
-[![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/workflows/Build%20image/badge.svg?event=push&branch=master)](https://github.com/patrikjuvonen/docker-nginx-http3/actions?query=branch%3Amaster+event%3Apush)
-![MIT License](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Docker Pulls](https://img.shields.io/docker/pulls/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
-[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/patrikjuvonen/docker-nginx-http3)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
-[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
+![MIT License](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
+[![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/workflows/Build%20image/badge.svg?event=push&branch=master)](https://github.com/patrikjuvonen/docker-nginx-http3/actions?query=branch%3Amaster+event%3Apush)
+[![Arch](https://img.shields.io/badge/docker%20arch-linux%2Famd64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
+[![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 
 Alpine Linux image with nginx `1.21.6` (mainline) with HTTP/3 (QUIC), TLSv1.3,
 0-RTT, HPACK, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset
@@ -50,7 +50,7 @@ Best practice example Nginx configs are available in this repo. See
 Example:
 
 ```Dockerfile
-# Nginx HTTP/3 Image
+# Base Nginx HTTP/3 Image
 FROM patrikjuvonen/docker-nginx-http3:latest
 
 # Copy your certs.
@@ -89,6 +89,7 @@ Contributions are welcome. Please feel free to contribute 😊.
 - PCRE latest with
   [JIT compilation](http://nginx.org/en/docs/ngx_core_module.html#pcre_jit)
   enabled
+- zlib latest
 - Alpine Linux (total size of **10 MB** compressed)
 
 ### In this fork

@@ -3,9 +3,13 @@
 # and ModSec modules.
 ##################################################
 # This is a fork of:
-# ranadeeppolavarapu/docker-nginx-http3
+# github.com/ranadeeppolavarapu/docker-nginx-http3
 #
-# Differences in this fork:
+# Special in this fork:
+# - ModSecurity for nginx (SpiderLabs) with
+#   coreruleset
+# - HPACK enabled and nginx quiche patch by
+#   kn007/patch
 # - BoringSSL OCSP enabled with kn007/patch
 # - Removed nginx debug build
 #
