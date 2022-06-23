@@ -21,17 +21,17 @@ FROM alpine:edge AS builder
 
 LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
 
-ENV NGINX_VERSION 1.21.6
-ENV QUICHE_CHECKOUT 95af1427ba7aa5a96bd9b809a770747e4750971f
+ENV NGINX_VERSION 1.23.0
+ENV QUICHE_CHECKOUT 072f293bcd978a2f0623eddb012c96588c543ec7
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
-ENV NJS_TAG 0.6.2
+ENV NJS_TAG 0.7.5
 
 # Build-time metadata as defined at https://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
 
-RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
+RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   && CONFIG="\
   --prefix=/etc/nginx \
   --sbin-path=/usr/sbin/nginx \
@@ -139,7 +139,7 @@ RUN set -x; GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && cd /usr/src/quiche \
   && git checkout --recurse-submodules $QUICHE_CHECKOUT \
   && cd /usr/src \
-  && wget -q https://raw.githubusercontent.com/kn007/patch/a3b20fc0df25aa6875f04f414e22bb1d2cd3ecb2/nginx_with_quic.patch \
+  && wget -q https://raw.githubusercontent.com/kn007/patch/1062e64ead7e1b21a52392cdd02d1d5bc631d231/nginx_with_quic.patch \
   && wget -q https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
   && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
   && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
