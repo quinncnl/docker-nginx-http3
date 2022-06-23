@@ -6,6 +6,8 @@
 [![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/workflows/Build%20image/badge.svg?event=push&branch=master)](https://github.com/patrikjuvonen/docker-nginx-http3/actions?query=branch%3Amaster+event%3Apush)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Famd64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
+[![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm%2Fv7-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
+[![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm%2Fv6-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 
 Alpine Linux image with nginx `1.23.0` (mainline) with HTTP/3 (QUIC), TLSv1.3,
 0-RTT, HPACK, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset
