@@ -9,7 +9,7 @@
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm%2Fv7-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm%2Fv6-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 
-Alpine Linux image with nginx `1.23.0` (mainline) with HTTP/3 (QUIC), TLSv1.3,
+Alpine Linux image with nginx `1.23.1` (mainline) with HTTP/3 (QUIC), TLSv1.3,
 0-RTT, HPACK, brotli, NJS, Cookie-Flag, headers, ModSecurity with coreruleset
 and BoringSSL with OCSP support. All built on the bleeding edge. Built on the
 edge, for the edge.
