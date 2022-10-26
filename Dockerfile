@@ -25,7 +25,7 @@ ENV NGINX_VERSION 1.23.2
 ENV QUICHE_CHECKOUT 24a959abf115923910ce18985aa199d85fb602d7
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
-ENV NJS_TAG 0.7.7
+ENV NJS_TAG 0.7.8
 
 # Build-time metadata as defined at https://label-schema.org
 ARG BUILD_DATE
