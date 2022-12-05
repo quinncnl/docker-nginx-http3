@@ -2,67 +2,73 @@ name: build our image
 
 on:
   push:
-    branches: master
+    branches:
+      - '**'
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: self-hosted
     steps:
-      - name: checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
-      # https://github.com/docker/setup-qemu-action
-      - name: Set Environment Variables
-        env:
-          REPO_OWNER: '${{ github.repository_owner }}'
-        run: |
-          IMG=docker-nginx-http3
 
-          echo "BUILD_VER=1.0.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
-          echo "IMG=${IMG}" >> $GITHUB_ENV
-          echo "DOCKER_IMG=${REPO_OWNER}/${IMG}" >> $GITHUB_ENV
-          echo "IMAGE=ghcr.io/${REPO_OWNER,,}/${IMG}" >> $GITHUB_ENV
+      - name: Set Environment Variables
+        run: |
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
-          echo "GIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
-          echo "GIT_REF=$(git symbolic-ref -q --short HEAD || git describe --tags --exact-match)" >> $GITHUB_ENV
           echo "VCS_REF=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/docker-nginx-http3
+            ghcr.io/${{ github.repository_owner }}/docker-nginx-http3
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=
+            type=sha,prefix=,format=long
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      # https://github.com/docker/setup-buildx-action
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
-      - name: Login to DockerHub
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Docker build and push
         uses: docker/build-push-action@v3
         with:
-          labels: |
-            org.opencontainers.image.authors=${{ github.repository_owner }}
-            org.opencontainers.image.created=${{ env.BUILD_DATE }}
-            org.opencontainers.image.description=Created from commit ${{ env.GIT_SHA }} and ref ${{ env.GIT_REF }}
-            org.opencontainers.image.ref.name=${{ env.GIT_REF }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.version=${{ env.BUILD_VER }}
-          tags: |
-            ${{ env.DOCKER_IMG }}:latest
-            ${{ env.DOCKER_IMG }}:${{ env.GIT_REF }}
-            ${{ env.DOCKER_IMG }}:${{ env.GIT_SHA }}
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ env.GIT_REF }}
-            ${{ env.IMAGE }}:${{ env.GIT_SHA }}
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          push: ${{ github.event_name != 'pull_request' }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
             VCS_REF=${{ env.VCS_REF }}
-          push: true
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
