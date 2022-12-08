@@ -19,17 +19,11 @@
 
 FROM alpine:edge AS builder
 
-LABEL maintainer="Patrik Juvonen <22572159+patrikjuvonen@users.noreply.github.com>"
-
 ENV NGINX_VERSION 1.23.2
 ENV QUICHE_CHECKOUT 24a959abf115923910ce18985aa199d85fb602d7
 ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 ENV NJS_TAG 0.7.9
-
-# Build-time metadata as defined at https://label-schema.org
-ARG BUILD_DATE
-ARG VCS_REF
 
 RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   && CONFIG="\
@@ -268,7 +262,3 @@ COPY modsec/* /etc/nginx/modsec/
 STOPSIGNAL SIGTERM
 
 CMD ["nginx", "-g", "daemon off;"]
-
-LABEL org.label-schema.build-date=$BUILD_DATE \
-  org.label-schema.vcs-ref=$VCS_REF \
-  org.label-schema.vcs-url="https://github.com/patrikjuvonen/docker-nginx-http3.git"

@@ -43,6 +43,10 @@ Images for this are available on
 **GitHub Container Registry (GHCR):**
 `docker pull ghcr.io/patrikjuvonen/docker-nginx-http3`
 
+Semantic versioning is enabled since 519e20d7f65d53b976cf7d13e364dca326e988b7,
+the first semantic version being 2.0.0. You can use it with the tag `:2.0.0`,
+`:2.0`, `:2` and so on.
+
 This is a base image like the default _nginx_ image. It is meant to be used as a
 drop-in replacement for the nginx base image.
 
