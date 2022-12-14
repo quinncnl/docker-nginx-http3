@@ -25,6 +25,9 @@ ENV MODSEC_TAG v3/master
 ENV MODSEC_NGX_TAG master
 ENV NJS_TAG 0.7.9
 
+ARG BUILD_DATE
+ARG VCS_REF
+
 RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   && CONFIG="\
   --prefix=/etc/nginx \
@@ -170,7 +173,7 @@ RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
   && mkdir /root/.cargo \
   && echo $'[net]\ngit-fetch-with-cli = true' > /root/.cargo/config.toml \
-  && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$CRS_COMMIT quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
+  && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE-$GITHUB_REF-$GITHUB_RUN_ID-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$CRS_COMMIT quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
   && make -j$(getconf _NPROCESSORS_ONLN) install \
   && rm -rf /etc/nginx/html/ \
