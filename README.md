@@ -46,7 +46,7 @@ Images for this are available on
 Semantic versioning is enabled since [519e20d7f65d53b976cf7d13e364dca326e988b7](https://github.com/patrikjuvonen/docker-nginx-http3/commit/519e20d7f65d53b976cf7d13e364dca326e988b7),
 the first semantic version being 2.0.0. You can use a semantical version using tags
 such as `:2.0.1`, `:2.0`, `:2`. I also provide a `latest` tag which is the latest
-image.
+release, and `master` which is the latest image from master branch.
 
 This is a base image like the default _nginx_ image. It is meant to be used as a
 drop-in replacement for the nginx base image.
