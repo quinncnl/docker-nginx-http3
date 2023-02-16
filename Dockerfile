@@ -242,6 +242,7 @@ RUN \
   tzdata \
   # Dependencies
   pcre \
+  pcre2 \
   libgcc \
   libintl \
   # ModSecurity dependencies
