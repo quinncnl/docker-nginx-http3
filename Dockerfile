@@ -267,6 +267,8 @@ COPY modsec/* /etc/nginx/modsec/
 # COPY nginx.conf /etc/nginx/
 # COPY h3.nginx.conf /etc/nginx/conf.d/
 
+RUN nginx -V
+
 STOPSIGNAL SIGTERM
 
 CMD ["nginx", "-g", "daemon off;"]
