@@ -35,7 +35,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build a Docker image
-      run: docker build -t patrikjuvonen/docker-nginx-http3:snyk-ci .
+      run: docker build --build-arg BUILD_DATE=${{ env.BUILD_DATE }} --build-arg VCS_REF=${{ env.VCS_REF }} --build-arg GITHUB_REF=${{ github.ref }} --build-arg GITHUB_RUN_ID=${{ github.run_id }} --build-arg GITHUB_RUN_NUMBER=${{ github.run_number }} --build-arg GITHUB_RUN_ATTEMPT=${{ github.run_attempt }} -t patrikjuvonen/docker-nginx-http3:snyk-ci .
     - name: Run Snyk to check Docker image for vulnerabilities
       # Snyk can be used to break the build when it detects vulnerabilities.
       # In this case we want to upload the issues to GitHub Code Scanning
