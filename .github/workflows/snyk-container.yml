@@ -35,12 +35,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build a Docker image
-      run: docker build --build-arg BUILD_DATE=${{ env.BUILD_DATE }} --build-arg VCS_REF=${{ env.VCS_REF }} --build-arg GITHUB_REF=${{ github.ref }} --build-arg GITHUB_RUN_ID=${{ github.run_id }} --build-arg GITHUB_RUN_NUMBER=${{ github.run_number }} --build-arg GITHUB_RUN_ATTEMPT=${{ github.run_attempt }} -t patrikjuvonen/docker-nginx-http3:snyk-ci .
+      run: docker buildx build -t patrikjuvonen/docker-nginx-http3:snyk-ci --build-arg BUILD_DATE=${{ env.BUILD_DATE }} --build-arg VCS_REF=${{ env.VCS_REF }} --build-arg GITHUB_REF=${{ github.ref }} --build-arg GITHUB_RUN_ID=${{ github.run_id }} --build-arg GITHUB_RUN_NUMBER=${{ github.run_number }} --build-arg GITHUB_RUN_ATTEMPT=${{ github.run_attempt }} .
     - name: Run Snyk to check Docker image for vulnerabilities
       # Snyk can be used to break the build when it detects vulnerabilities.
       # In this case we want to upload the issues to GitHub Code Scanning
       continue-on-error: true
-      uses: snyk/actions/docker@1cc9026f51d822442cb4b872d8d7ead8cc69a018
+      uses: snyk/actions/docker@55bc9e182e7c39690c290c31cc75d602f31da335
       env:
         # In order to use the Snyk Action you will need to have a Snyk API token.
         # More details in https://github.com/snyk/actions#getting-your-snyk-token
