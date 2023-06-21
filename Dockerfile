@@ -17,13 +17,13 @@
 # for doing the ground work!
 ##################################################
 
-FROM alpine:edge AS builder
+FROM alpine:edge AS deps
 
-ENV NGINX_VERSION 1.23.4
-ENV QUICHE_CHECKOUT b70f728a9acda3c4690b5792593ed12c05a99ca7
-ENV MODSEC_TAG v3/master
-ENV MODSEC_NGX_TAG master
-ENV NJS_TAG 0.7.12
+ARG NGINX_VERSION=1.23.4
+ARG QUICHE_CHECKOUT=b70f728a9acda3c4690b5792593ed12c05a99ca7
+ARG MODSEC_TAG=v3/master
+ARG MODSEC_NGX_TAG=master
+ARG NJS_TAG=0.7.12
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -32,8 +32,9 @@ ARG GITHUB_RUN_ID
 ARG GITHUB_RUN_NUMBER
 ARG GITHUB_RUN_ATTEMPT
 
-RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
-  && CONFIG="\
+ARG GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967
+
+ARG CONFIG=" \
   --prefix=/etc/nginx \
   --sbin-path=/usr/sbin/nginx \
   --modules-path=/usr/lib/nginx/modules \
@@ -91,7 +92,10 @@ RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   --with-cc-opt=-Wno-error \
   --with-select_module \
   --with-poll_module \
-  " \
+"
+
+RUN set -eux \
+  && echo $NGINX_VERSION $QUICHE_CHECKOUT $MODSEC_TAG $MODSEC_NGX_TAG $NJS_TAG $BUILD_DATE $VCS_REF $GITHUB_REF $GITHUB_RUN_ID $GITHUB_RUN_NUMBER $GITHUB_RUN_ATTEMPT $GPG_KEYS $CONFIG \
   && addgroup -S nginx \
   && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
   && apk update \
@@ -129,26 +133,50 @@ RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   libstdc++ \
   libmaxminddb-dev \
   lmdb-dev \
-  file \
-  && mkdir /usr/src \
-  && cd /usr/src \
-  && git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli \
-  && git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module \
-  && git clone --branch $NJS_TAG --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs \
-  && git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module \
-  && git clone --recursive https://github.com/cloudflare/quiche \
-  && cd /usr/src/quiche \
-  && git checkout --recurse-submodules $QUICHE_CHECKOUT \
-  && cd /usr/src \
+  file
+
+WORKDIR /usr/src/
+
+FROM deps AS clone_ngx_brotli
+RUN git clone --depth=1 --recursive --shallow-submodules https://github.com/google/ngx_brotli
+
+FROM deps AS clone_headers-more-nginx-module
+RUN git clone --depth=1 --recursive --shallow-submodules https://github.com/openresty/headers-more-nginx-module
+
+FROM deps AS clone_njs
+RUN git clone --branch $NJS_TAG --depth=1 --recursive --shallow-submodules https://github.com/nginx/njs
+
+FROM deps AS clone_nginx_cookie_flag_module
+RUN git clone --depth=1 --recursive --shallow-submodules https://github.com/AirisX/nginx_cookie_flag_module
+
+FROM deps AS clone_quiche
+RUN git clone --recursive https://github.com/cloudflare/quiche \
+  && cd quiche \
+  && git checkout --recurse-submodules $QUICHE_CHECKOUT
+
+FROM deps AS clone_modsecurity
+RUN set -eux \
+  && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
+  && cd ModSecurity \
+  && ./build.sh \
+  && ./configure --with-lmdb --enable-examples=no \
+  && make -j$(getconf _NPROCESSORS_ONLN) \
+  && make -j$(getconf _NPROCESSORS_ONLN) install \
+  && strip /usr/local/modsecurity/bin/* \
+  && strip /usr/local/modsecurity/lib/*.so.* \
+  && strip /usr/local/modsecurity/lib/*.a
+
+FROM deps AS clone_modsecurity-nginx
+RUN git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx
+
+FROM deps AS clone_coreruleset
+RUN git clone --depth=1 https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
+  && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf
+
+FROM deps AS clone_nginx
+RUN set -eux \
   && wget -q https://raw.githubusercontent.com/kn007/patch/1062e64ead7e1b21a52392cdd02d1d5bc631d231/nginx_with_quic.patch \
   && wget -q https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
-  && git clone --recursive --branch $MODSEC_TAG --single-branch https://github.com/SpiderLabs/ModSecurity \
-  && git clone --depth=1 --recursive --shallow-submodules --branch $MODSEC_NGX_TAG --single-branch https://github.com/SpiderLabs/ModSecurity-nginx \
-  && git clone --depth=1 https://github.com/coreruleset/coreruleset /usr/local/share/coreruleset \
-  && CRS_COMMIT=$(git --git-dir=/usr/local/share/coreruleset/.git rev-parse --short HEAD) \
-  && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf \
-  && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
-  && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
   && wget -qO nginx.tar.gz https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz \
   && wget -qO nginx.tar.gz.asc https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc \
   && export GNUPGHOME="$(mktemp -d)" \
@@ -167,33 +195,40 @@ RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
   && tar -zxC /usr/src -f nginx.tar.gz \
   && rm nginx.tar.gz \
-  && cd /usr/src/ModSecurity \
-  && ./build.sh \
-  && ./configure --with-lmdb --enable-examples=no \
-  && make -j$(getconf _NPROCESSORS_ONLN) \
-  && make -j$(getconf _NPROCESSORS_ONLN) install \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/nginx_with_quic.patch \
-  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
+  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch
+
+FROM deps AS builder
+COPY --from=clone_nginx /usr/src/nginx-$NGINX_VERSION /usr/src/nginx-$NGINX_VERSION
+COPY --from=clone_coreruleset /usr/local/share/coreruleset /usr/local/share/coreruleset
+COPY --from=clone_modsecurity /usr/local/modsecurity /usr/local/modsecurity
+COPY --from=clone_modsecurity-nginx /usr/src/ModSecurity-nginx /usr/src/ModSecurity-nginx
+COPY --from=clone_quiche /usr/src/quiche /usr/src/quiche
+COPY --from=clone_ngx_brotli /usr/src/ngx_brotli /usr/src/ngx_brotli
+COPY --from=clone_headers-more-nginx-module /usr/src/headers-more-nginx-module /usr/src/headers-more-nginx-module
+COPY --from=clone_njs /usr/src/njs /usr/src/njs
+COPY --from=clone_nginx_cookie_flag_module /usr/src/nginx_cookie_flag_module /usr/src/nginx_cookie_flag_module
+RUN set -eux \
   && mkdir /root/.cargo \
   && echo $'[net]\ngit-fetch-with-cli = true' > /root/.cargo/config.toml \
-  && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE-$GITHUB_REF-$GITHUB_RUN_ID-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$CRS_COMMIT quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
+  && cd /usr/src/nginx-$NGINX_VERSION \
+  && ./configure $CONFIG --build="docker-nginx-http3-$VCS_REF-$BUILD_DATE-$GITHUB_REF-$GITHUB_RUN_ID-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT ModSecurity-$(git --git-dir=/usr/src/ModSecurity/.git rev-parse --short HEAD) ModSecurity-nginx-$(git --git-dir=/usr/src/ModSecurity-nginx/.git rev-parse --short HEAD) coreruleset-$(git --git-dir=/usr/local/share/coreruleset/.git rev-parse --short HEAD) quiche-$(git --git-dir=/usr/src/quiche/.git rev-parse --short HEAD) ngx_brotli-$(git --git-dir=/usr/src/ngx_brotli/.git rev-parse --short HEAD) headers-more-nginx-module-$(git --git-dir=/usr/src/headers-more-nginx-module/.git rev-parse --short HEAD) njs-$(git --git-dir=/usr/src/njs/.git rev-parse --short HEAD) nginx_cookie_flag_module-$(git --git-dir=/usr/src/nginx_cookie_flag_module/.git rev-parse --short HEAD)" \
   && make -j$(getconf _NPROCESSORS_ONLN) \
-  && make -j$(getconf _NPROCESSORS_ONLN) install \
+  && make -j$(getconf _NPROCESSORS_ONLN) install
+
+RUN set -eux \
   && rm -rf /etc/nginx/html/ \
   && mkdir /etc/nginx/conf.d/ \
   && mkdir /etc/nginx/modsec/ \
   && mkdir -p /usr/share/nginx/html/ \
-  && install -m644 html/index.html /usr/share/nginx/html/ \
-  && install -m644 html/50x.html /usr/share/nginx/html/ \
-  && install -m444 /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf \
-  && install -m444 /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping \
+  && install -m644 /usr/src/nginx-$NGINX_VERSION/html/index.html /usr/share/nginx/html/ \
+  && install -m644 /usr/src/nginx-$NGINX_VERSION/html/50x.html /usr/share/nginx/html/ \
   && ln -s /usr/lib/nginx/modules /etc/nginx/modules \
   && strip /usr/sbin/nginx* \
   && strip /usr/lib/nginx/modules/*.so \
-  && strip /usr/local/modsecurity/bin/* \
-  && strip /usr/local/modsecurity/lib/*.so.* \
-  && strip /usr/local/modsecurity/lib/*.a \
+  && find /usr/local/share/coreruleset \! -name '*.conf' -type f -mindepth 1 -maxdepth 1 -delete \
+  && find /usr/local/share/coreruleset \! -name 'rules' -type d -mindepth 1 -maxdepth 1 | xargs rm -rf \
   && rm -rf /etc/nginx/*.default /etc/nginx/*.so \
   && rm -rf /usr/src \
   \
@@ -222,6 +257,9 @@ RUN set -x; GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
   # Create self-signed certificate
   && mkdir -p /etc/ssl/private \
   && openssl req -x509 -newkey rsa:4096 -nodes -keyout /etc/ssl/private/localhost.key -out /etc/ssl/localhost.pem -days 365 -sha256 -subj '/CN=localhost'
+
+COPY --from=clone_modsecurity /usr/src/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf
+COPY --from=clone_modsecurity /usr/src/ModSecurity/unicode.mapping /etc/nginx/modsec/unicode.mapping
 
 FROM alpine:edge
 
