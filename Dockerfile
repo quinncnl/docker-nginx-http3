@@ -20,7 +20,7 @@
 FROM alpine:edge AS deps
 
 ARG NGINX_VERSION=1.23.4
-ARG QUICHE_CHECKOUT=7ab6a55cfe471267d61e4d28ba43d41defcd87e0
+ARG QUICHE_CHECKOUT=e6ca4da17c1d93e3adfb92834db863fd735410f1
 ARG MODSEC_TAG=v3/master
 ARG MODSEC_NGX_TAG=master
 ARG NJS_TAG=0.7.12
@@ -174,8 +174,9 @@ RUN git clone --depth=1 https://github.com/coreruleset/coreruleset /usr/local/sh
   && cp /usr/local/share/coreruleset/crs-setup.conf.example /usr/local/share/coreruleset/crs-setup.conf
 
 FROM deps AS clone_nginx
+COPY nginx.patch /usr/src/nginx.patch
 RUN set -eux \
-  && wget -q https://raw.githubusercontent.com/kn007/patch/1062e64ead7e1b21a52392cdd02d1d5bc631d231/nginx_with_quic.patch \
+  && wget -q https://raw.githubusercontent.com/kn007/patch/ce70f81a3098afe0e27a8e579b77b6fb32870c54/nginx_with_quic.patch \
   && wget -q https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
   && wget -qO nginx.tar.gz https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz \
   && wget -qO nginx.tar.gz.asc https://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc \
@@ -197,7 +198,8 @@ RUN set -eux \
   && rm nginx.tar.gz \
   && cd /usr/src/nginx-$NGINX_VERSION \
   && patch -p01 < /usr/src/nginx_with_quic.patch \
-  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch
+  && patch -p01 < /usr/src/Enable_BoringSSL_OCSP.patch \
+  && patch -p01 < /usr/src/nginx.patch
 
 FROM deps AS builder
 COPY --from=clone_nginx /usr/src/nginx-$NGINX_VERSION /usr/src/nginx-$NGINX_VERSION
