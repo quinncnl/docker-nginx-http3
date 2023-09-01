@@ -266,6 +266,7 @@ COPY --from=clone_modsecurity /usr/src/ModSecurity/unicode.mapping /etc/nginx/mo
 FROM alpine:edge
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/
+COPY --from=builder /usr/lib/libbrotli* /usr/lib
 COPY --from=builder /usr/lib/nginx /usr/lib/nginx
 COPY --from=builder /usr/share/nginx/html/* /usr/share/nginx/html/
 COPY --from=builder /etc/nginx/ /etc/nginx/
