@@ -33,14 +33,14 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build a Docker image
       run: docker buildx build -t patrikjuvonen/docker-nginx-http3:snyk-ci --build-arg BUILD_DATE=${{ env.BUILD_DATE }} --build-arg VCS_REF=${{ env.VCS_REF }} --build-arg GITHUB_REF=${{ github.ref }} --build-arg GITHUB_RUN_ID=${{ github.run_id }} --build-arg GITHUB_RUN_NUMBER=${{ github.run_number }} --build-arg GITHUB_RUN_ATTEMPT=${{ github.run_attempt }} .
     - name: Run Snyk to check Docker image for vulnerabilities
       # Snyk can be used to break the build when it detects vulnerabilities.
       # In this case we want to upload the issues to GitHub Code Scanning
       continue-on-error: true
-      uses: snyk/actions/docker@55bc9e182e7c39690c290c31cc75d602f31da335
+      uses: snyk/actions/docker@299cde98a08ff8b1c2bfde1e5a067bce67a6d2b8
       env:
         # In order to use the Snyk Action you will need to have a Snyk API token.
         # More details in https://github.com/snyk/actions#getting-your-snyk-token
