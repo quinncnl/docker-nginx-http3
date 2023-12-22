@@ -3,7 +3,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/patrikjuvonen/docker-nginx-http3?color=brightgreen)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3)
 ![MIT License](https://img.shields.io/github/license/patrikjuvonen/docker-nginx-http3)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
-[![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/workflows/Build%20image/badge.svg?event=push&branch=master)](https://github.com/patrikjuvonen/docker-nginx-http3/actions?query=branch%3Amaster+event%3Apush)
+[![Build Status](https://github.com/patrikjuvonen/docker-nginx-http3/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/patrikjuvonen/docker-nginx-http3/actions/workflows/ci.yml?event=push)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Famd64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm64-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
 [![Arch](https://img.shields.io/badge/docker%20arch-linux%2Farm%2Fv7-blue)](https://hub.docker.com/r/patrikjuvonen/docker-nginx-http3/tags)
